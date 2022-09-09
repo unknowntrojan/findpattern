@@ -1,0 +1,29 @@
+[package]
+name = "findpattern"
+version = "0.1.0"
+authors = ["unknowntrojan"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+opt-level = 3
+debug = 0
+rpath = false
+strip = "symbols"
+lto = "fat"
+incremental = false
+
+[dependencies]
+rayon = { version = "*", optional = true }
+
+[dev-dependencies]
+rand = "*"
+
+[features]
+parallel = ["dep:rayon"]
+
+[[bench]]
+name = "find_pattern"
+path = "benches/pattern.rs"
+required-features = ["parallel"]
