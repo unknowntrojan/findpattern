@@ -57,6 +57,18 @@ pub fn find_pattern(region: &[u8], pattern: &Pattern) -> Option<usize> {
         .position(|wnd| core::intrinsics::unlikely(match_pattern(wnd, pattern)))
 }
 
+///
+/// Returns all positions within `region` that match `pattern`.
+///
+pub fn find_patterns(region: &[u8], pattern: &Pattern) -> Vec<usize> {
+    region
+        .windows(pattern.len())
+        .enumerate()
+        .filter(|(_, wnd)| core::intrinsics::unlikely(match_pattern(wnd, pattern)))
+        .map(|(idx, _)| idx)
+        .collect()
+}
+
 #[cfg(feature = "parallel")]
 pub fn find_pattern_par(region: &[u8], pattern: &Pattern) -> Option<usize> {
     region
@@ -79,6 +91,19 @@ mod tests {
         let pattern = pattern!(0xDE, 0xAD, ?, 0xBE, 0xEF);
 
         assert_eq!(find_pattern(&test_pattern, &pattern), Some(20));
+    }
+
+    #[test]
+    fn pattern_fwd_multiple() {
+        let test_pattern: [u8; 32] = [
+            0x00, 0x00, 0x00, 0x00, 0xDE, 0xAD, 0xFF, 0xBE, 0xEF, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xDE, 0xAD, 0xFF, 0xBE, 0xEF, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+        ];
+
+        let pattern = pattern!(0xDE, 0xAD, ?, 0xBE, 0xEF);
+
+        assert_eq!(find_patterns(&test_pattern, &pattern), vec![4, 20]);
     }
 
     #[cfg(feature = "parallel")]
