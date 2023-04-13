@@ -77,7 +77,7 @@ pub fn find_pattern_par(region: &[u8], pattern: &Pattern) -> Option<usize> {
 }
 
 #[cfg(feature = "parallel")]
-pub fn find_patterns_par<'a>(region: &'a [u8], pattern: Pattern<'a>) -> Vec<usize> {
+pub fn find_patterns_par(region: &'a [u8], pattern: &Pattern) -> Vec<usize> {
     region
         .par_windows(pattern.len())
         .enumerate()
