@@ -76,6 +76,16 @@ pub fn find_pattern_par(region: &[u8], pattern: &Pattern) -> Option<usize> {
         .position_any(|wnd| core::intrinsics::unlikely(match_pattern(wnd, pattern)))
 }
 
+#[cfg(feature = "parallel")]
+pub fn find_patterns_par<'a>(region: &'a [u8], pattern: Pattern<'a>) -> Vec<usize> {
+    region
+        .par_windows(pattern.len())
+        .enumerate()
+        .filter(|(_, wnd)| core::intrinsics::unlikely(match_pattern(wnd, pattern)))
+        .map(|(idx, _)| idx)
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
