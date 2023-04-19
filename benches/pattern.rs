@@ -24,7 +24,7 @@ fn bench_pattern_1gig(b: &mut Bencher) {
 
     b.iter(|| {
         assert_eq!(
-            find_pattern(&test_pattern, &pattern!(0xDE, 0xAD, _, 0xBE, 0xEF)),
+            find_pattern(&test_pattern, pattern!(0xDE, 0xAD, _, 0xBE, 0xEF)),
             Some(pattern)
         );
     });
@@ -48,7 +48,7 @@ fn bench_pattern_parallel_1gig(b: &mut Bencher) {
 
     b.iter(|| {
         assert_eq!(
-            find_pattern_par(&test_pattern, &pattern!(0xDE, 0xAD, _, 0xBE, 0xEF)),
+            find_pattern_par(&test_pattern, pattern!(0xDE, 0xAD, _, 0xBE, 0xEF)),
             Some(pattern)
         );
     });

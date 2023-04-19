@@ -6,10 +6,10 @@
 //! This crate isn't recommended to be used as a stand-alone, but wrapped by my `signature` crate.
 //!
 
-#[cfg(feature = "parallel")]
 use rayon::{prelude::IndexedParallelIterator, prelude::ParallelIterator, slice::ParallelSlice};
 
-pub type Pattern = Vec<Option<u8>>;
+pub type OwnedPattern = Vec<Option<u8>>;
+pub type Pattern<'a> = &'a [Option<u8>];
 
 /// Creates a pattern.
 ///
@@ -28,10 +28,10 @@ pub type Pattern = Vec<Option<u8>>;
 #[macro_export]
 macro_rules! pattern {
     ($($elem:tt),+) => {
-        vec![$(pattern!(@el $elem)),+]
+        &[$(pattern!(@el $elem)),+]
     };
     (@el $v:expr) => {
-        Some($v)
+        Some($v as u8)
     };
     (@el $v:tt) => {
         None
@@ -39,7 +39,7 @@ macro_rules! pattern {
 }
 
 #[inline(always)]
-fn match_pattern(window: &[u8], pattern: &Pattern) -> bool {
+fn match_pattern(window: &[u8], pattern: Pattern) -> bool {
     window.iter().zip(pattern).all(|(v, p)| match p {
         Some(x) => *v == *x,
         None => true,
@@ -51,7 +51,7 @@ fn match_pattern(window: &[u8], pattern: &Pattern) -> bool {
 ///
 /// Short-circuiting.
 ///
-pub fn find_pattern(region: &[u8], pattern: &Pattern) -> Option<usize> {
+pub fn find_pattern(region: &[u8], pattern: Pattern) -> Option<usize> {
     region
         .windows(pattern.len())
         .position(|wnd| core::intrinsics::unlikely(match_pattern(wnd, pattern)))
@@ -60,7 +60,7 @@ pub fn find_pattern(region: &[u8], pattern: &Pattern) -> Option<usize> {
 ///
 /// Returns all positions within `region` that match `pattern`.
 ///
-pub fn find_patterns(region: &[u8], pattern: &Pattern) -> Vec<usize> {
+pub fn find_patterns(region: &[u8], pattern: Pattern) -> Vec<usize> {
     region
         .windows(pattern.len())
         .enumerate()
@@ -70,14 +70,14 @@ pub fn find_patterns(region: &[u8], pattern: &Pattern) -> Vec<usize> {
 }
 
 #[cfg(feature = "parallel")]
-pub fn find_pattern_par(region: &[u8], pattern: &Pattern) -> Option<usize> {
+pub fn find_pattern_par(region: &[u8], pattern: Pattern) -> Option<usize> {
     region
         .par_windows(pattern.len())
         .position_any(|wnd| core::intrinsics::unlikely(match_pattern(wnd, pattern)))
 }
 
 #[cfg(feature = "parallel")]
-pub fn find_patterns_par(region: &[u8], pattern: &Pattern) -> Vec<usize> {
+pub fn find_patterns_par(region: &[u8], pattern: Pattern) -> Vec<usize> {
     region
         .par_windows(pattern.len())
         .enumerate()
@@ -100,7 +100,7 @@ mod tests {
 
         let pattern = pattern!(0xDE, 0xAD, ?, 0xBE, 0xEF);
 
-        assert_eq!(find_pattern(&test_pattern, &pattern), Some(20));
+        assert_eq!(find_pattern(&test_pattern, pattern), Some(20));
     }
 
     #[test]
@@ -113,7 +113,7 @@ mod tests {
 
         let pattern = pattern!(0xDE, 0xAD, ?, 0xBE, 0xEF);
 
-        assert_eq!(find_patterns(&test_pattern, &pattern), vec![4, 20]);
+        assert_eq!(find_patterns(&test_pattern, pattern), vec![4, 20]);
     }
 
     #[cfg(feature = "parallel")]
@@ -127,14 +127,14 @@ mod tests {
 
         let pattern = pattern!(0xDE, 0xAD, ?, 0xBE, 0xEF);
 
-        assert_eq!(find_pattern_par(&test_pattern, &pattern), Some(20));
+        assert_eq!(find_pattern_par(&test_pattern, pattern), Some(20));
     }
 
     #[test]
     fn matching() {
         assert!(match_pattern(
             &[0xDE, 0xAD, 0x00, 0xBE, 0xEF],
-            &pattern!(0xDE, 0xAD, ?, 0xBE, 0xEF)
+            pattern!(0xDE, 0xAD, ?, 0xBE, 0xEF)
         ))
     }
 }
